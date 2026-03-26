@@ -8,6 +8,12 @@ export const agentsApi = {
     return response.data
   },
 
+  // Sync agents from OpenClaw
+  async sync(): Promise<{ message: string; agents: string[] }> {
+    const response = await api.get<{ message: string; agents: string[] }>('/agents/sync')
+    return response.data
+  },
+
   // Get single agent
   async get(id: string): Promise<Agent> {
     const response = await api.get<Agent>(`/agents/${id}`)
@@ -40,6 +46,12 @@ export const agentsApi = {
   // Stop agent
   async stop(id: string): Promise<{ message: string; agent_id: string }> {
     const response = await api.post(`/agents/${id}/stop`)
+    return response.data
+  },
+
+  // Send message to agent
+  async message(id: string, message: string): Promise<{ message: string; result: unknown }> {
+    const response = await api.post(`/agents/${id}/message`, null, { params: { message } })
     return response.data
   },
 }

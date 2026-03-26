@@ -25,6 +25,10 @@
               <el-icon><Avatar /></el-icon>
               <span>角色库</span>
             </el-menu-item>
+            <el-menu-item index="/gateway">
+              <el-icon><Connection /></el-icon>
+              <span>Gateway</span>
+            </el-menu-item>
           </el-menu>
         </el-header>
         <el-main class="app-main">

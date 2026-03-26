@@ -247,3 +247,31 @@ async def send_message_to_agent(
         raise HTTPException(status_code=500, detail=f"发送失败: {str(e)}")
 
 
+@router.post("/{agent_id}/bind")
+async def bind_agent_channel(
+    agent_id: str,
+    channel: str,
+    account_id: Optional[str] = None,
+    session: AsyncSession = Depends(get_session),
+):
+    """绑定智能体到通道
+
+    Args:
+        agent_id: 智能体 ID
+        channel: 通道类型 (telegram, whatsapp, discord, feishu 等)
+        account_id: 账户 ID (可选)
+    """
+    result = await session.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="智能体不存在")
+
+    try:
+        openclaw_service = get_openclaw_service()
+        result = await openclaw_service.bind_agent(agent_id, channel, account_id)
+        return {"message": "绑定成功", "agent_id": agent_id, "result": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"绑定失败: {str(e)}")
+
+

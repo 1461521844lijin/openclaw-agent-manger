@@ -25,6 +25,12 @@ const router = createRouter({
       component: () => import('../views/RolesView.vue'),
       meta: { title: '角色库' },
     },
+    {
+      path: '/gateway',
+      name: 'gateway',
+      component: () => import('../views/GatewayView.vue'),
+      meta: { title: 'Gateway 管理' },
+    },
   ],
 })
 
