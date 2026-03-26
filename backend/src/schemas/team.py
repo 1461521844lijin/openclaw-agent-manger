@@ -1,13 +1,15 @@
 """Team schemas"""
 
 from datetime import datetime
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
+
 from pydantic import BaseModel, Field
 
 
 class CollaborationRule(BaseModel):
     """协作规则"""
 
+    source_id: str = Field(..., description="源智能体ID")
     target_id: str = Field(..., description="目标智能体ID")
     trigger: str = Field(..., description="触发条件")
 

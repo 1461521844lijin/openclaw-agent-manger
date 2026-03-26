@@ -1,19 +1,20 @@
 """Role library API routes"""
 
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
 from ..models import Role
 from ..schemas import (
-    RoleCreate,
-    RoleUpdate,
-    RoleResponse,
-    RoleListResponse,
     RoleCategory,
     RoleCategoryListResponse,
+    RoleCreate,
+    RoleListResponse,
+    RoleResponse,
+    RoleUpdate,
 )
 
 router = APIRouter()

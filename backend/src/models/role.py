@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import String, Text, DateTime
+from sqlalchemy import DateTime, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..database import Base
@@ -26,7 +26,9 @@ class Role(Base):
     category: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     is_builtin: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     def __repr__(self) -> str:
         return f"<Role {self.name}>"

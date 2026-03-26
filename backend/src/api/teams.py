@@ -1,19 +1,18 @@
 """Team management API routes"""
 
-from typing import List
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..database import get_session
 from ..models import Agent, Team
 from ..schemas import (
     TeamCreate,
-    TeamUpdate,
-    TeamResponse,
     TeamDetailResponse,
     TeamListResponse,
+    TeamResponse,
+    TeamUpdate,
 )
 from ..services.openclaw_service import get_openclaw_service
 
@@ -84,9 +83,11 @@ async def create_team(
     """创建团队"""
     # 获取所有指定的智能体
     agents = []
+    agent_ids = []
     if data.agent_ids:
         result = await session.execute(select(Agent).where(Agent.id.in_(data.agent_ids)))
         agents = result.scalars().all()
+        agent_ids = [a.id for a in agents]
 
         if len(agents) != len(data.agent_ids):
             raise HTTPException(status_code=400, detail="部分智能体不存在")
@@ -94,7 +95,9 @@ async def create_team(
     team = Team(
         name=data.name,
         description=data.description,
-        collaborations=[c.model_dump() for c in data.collaborations] if data.collaborations else None,
+        collaborations=[c.model_dump() for c in data.collaborations]
+        if data.collaborations
+        else None,
         agents=agents,
     )
     session.add(team)
@@ -108,7 +111,7 @@ async def create_team(
         collaborations=team.collaborations,
         created_at=team.created_at,
         updated_at=team.updated_at,
-        agents=[a.id for a in team.agents],
+        agents=agent_ids,
     )
 
 

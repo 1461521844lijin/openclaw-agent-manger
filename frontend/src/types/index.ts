@@ -37,6 +37,7 @@ export interface AgentUpdate {
 }
 
 export interface CollaborationRule {
+  source_id: string
   target_id: string
   trigger: string
 }

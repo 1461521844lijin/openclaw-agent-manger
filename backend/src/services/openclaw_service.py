@@ -1,10 +1,10 @@
 """OpenClaw service layer - uses local CLI commands for agent management"""
 
-import json
 import asyncio
+import json
 import shutil
-from typing import Optional, Dict, Any, List
 from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 from ..config import settings
 

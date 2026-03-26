@@ -1,13 +1,14 @@
 """Agent management API routes"""
 
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_session
 from ..models import Agent, AgentStatus
-from ..schemas import AgentCreate, AgentUpdate, AgentResponse, AgentListResponse
+from ..schemas import AgentCreate, AgentListResponse, AgentResponse, AgentUpdate
 from ..services.openclaw_service import get_openclaw_service
 
 router = APIRouter()

@@ -5,9 +5,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api import agents, gateway, roles, teams
 from .config import settings
 from .database import init_db
-from .api import agents, teams, roles, gateway
 
 
 @asynccontextmanager

@@ -32,14 +32,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
-import { VueFlow, useVueFlow, type Node, type Edge } from '@vue-flow/core'
+import { ref, watch, onMounted } from 'vue'
+import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/controls/dist/style.css'
-import '@vue-flow/background/dist/style.css'
 
 interface AgentData {
   id: string
@@ -56,6 +55,11 @@ interface Collaboration {
   trigger: string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FlowNode = any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type FlowEdge = any
+
 const props = defineProps<{
   agents: AgentData[]
   collaborations?: Collaboration[]
@@ -64,8 +68,8 @@ const props = defineProps<{
 const { fitView } = useVueFlow()
 
 // Generate nodes from agents
-const nodes = ref<Node[]>([])
-const edges = ref<Edge[]>([])
+const nodes = ref<FlowNode[]>([])
+const edges = ref<FlowEdge[]>([])
 
 // Role emoji mapping
 const roleEmojis: Record<string, string> = {

@@ -1,14 +1,18 @@
 """Agent model"""
 
+import enum
 from datetime import datetime
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from uuid import uuid4
 
-from sqlalchemy import String, Text, DateTime, JSON, ForeignKey, Enum as SQLEnum
+from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-import enum
 
 from ..database import Base
+
+if TYPE_CHECKING:
+    from .team import Team
 
 
 class AgentStatus(str, enum.Enum):
@@ -35,9 +39,13 @@ class Agent(Base):
     status: Mapped[AgentStatus] = mapped_column(
         SQLEnum(AgentStatus), default=AgentStatus.STOPPED
     )
-    team_id: Mapped[Optional[str]] = mapped_column(String(36), ForeignKey("teams.id"), nullable=True)
+    team_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("teams.id"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
     # Relationship
     team: Mapped[Optional["Team"]] = relationship("Team", back_populates="agents")

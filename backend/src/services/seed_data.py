@@ -1,7 +1,6 @@
 """Builtin role templates"""
 
-from typing import List, Dict, Any
-
+from typing import Any, Dict, List
 
 BUILTIN_ROLES: List[Dict[str, Any]] = [
     {
@@ -9,7 +8,9 @@ BUILTIN_ROLES: List[Dict[str, Any]] = [
         "name_en": "steward",
         "emoji": "🧑‍💼",
         "description": "负责整体协调、任务分发和团队管理，是团队的核心协调者。",
-        "description_en": "Responsible for overall coordination, task distribution and team management.",
+        "description_en": (
+            "Responsible for overall coordination, task distribution and team management."
+        ),
         "core_mission": "高效协调团队成员，确保任务顺利流转，处理跨角色协作。",
         "critical_rules": "优先处理用户直接请求，合理分配任务给合适的团队成员，监控任务进度。",
         "category": "管理",
@@ -20,7 +21,9 @@ BUILTIN_ROLES: List[Dict[str, Any]] = [
         "name_en": "dev",
         "emoji": "👨‍💻",
         "description": "负责代码开发、架构设计、DevOps等技术相关工作。",
-        "description_en": "Responsible for coding, architecture design, DevOps and technical tasks.",
+        "description_en": (
+            "Responsible for coding, architecture design, DevOps and technical tasks."
+        ),
         "core_mission": "高质量完成开发任务，确保代码质量和系统稳定性。",
         "critical_rules": "遵循最佳实践，编写可维护代码，及时响应技术需求。",
         "category": "技术",
