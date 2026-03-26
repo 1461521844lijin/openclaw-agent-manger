@@ -43,7 +43,7 @@ cd ..
 
 :: Start backend
 echo [3/4] Starting backend server (port 3789)...
-start "OpenClaw Backend" cmd /k "cd backend && uv run uvicorn src.main:app --reload --port 3789"
+start "OpenClaw Backend" cmd /k "cd backend && uv run uvicorn src.main:app --port 3789"
 
 :: Wait for backend to start
 timeout /t 3 /nobreak >nul
