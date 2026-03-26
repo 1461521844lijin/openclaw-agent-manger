@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "Bash(pip search:*)",
+      "Bash(pip index:*)",
+      "Bash(curl -s https://pypi.org/pypi/openclaw/json)",
+      "Bash(gh repo:*)",
+      "Bash(git clone:*)",
+      "Read(//tmp/**)",
+      "Read(//c/Users/jin_l/AppData/Local/Temp/openclaw-ref/**)",
+      "Bash(find /tmp/openclaw-ref/src -name *.ts -type f)",
+      "Bash(find /tmp/openclaw-ref/web -name *.tsx -type f)",
+      "Bash(cd:*)",
+      "Bash(uv sync:*)"
+    ]
+  }
+}
