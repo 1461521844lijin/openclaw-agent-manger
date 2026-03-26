@@ -46,6 +46,9 @@ data/
 *.log
 logs/
 
+# Scripts
+*.pid
+
 # OS
 .DS_Store
 Thumbs.db
