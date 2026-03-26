@@ -2,6 +2,7 @@
 
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy import select
 
 from .config import settings
 
@@ -27,9 +28,26 @@ class Base(DeclarativeBase):
 
 
 async def init_db():
-    """Initialize database tables"""
+    """Initialize database tables and seed data"""
+    from .models import Role
+    from .services.seed_data import BUILTIN_ROLES
+
+    # Create tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Seed builtin roles
+    async with async_session_maker() as session:
+        for role_data in BUILTIN_ROLES:
+            # Check if role already exists
+            result = await session.execute(
+                select(Role).where(Role.name_en == role_data["name_en"])
+            )
+            existing_role = result.scalar_one_or_none()
+            if not existing_role:
+                role = Role(**role_data)
+                session.add(role)
+        await session.commit()
 
 
 async def get_session() -> AsyncSession:
