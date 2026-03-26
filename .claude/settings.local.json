@@ -14,7 +14,9 @@
       "Bash(find /tmp/openclaw-ref/web -name *.tsx -type f)",
       "Bash(cd:*)",
       "Bash(uv sync:*)",
-      "Bash(uv run:*)"
+      "Bash(uv run:*)",
+      "Bash(npm create:*)",
+      "Bash(npm install:*)"
     ]
   }
 }
