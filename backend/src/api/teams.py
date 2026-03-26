@@ -15,6 +15,7 @@ from ..schemas import (
     TeamDetailResponse,
     TeamListResponse,
 )
+from ..services.openclaw_service import get_openclaw_service
 
 router = APIRouter()
 
@@ -183,9 +184,25 @@ async def deploy_team(
     if not team.agents:
         raise HTTPException(status_code=400, detail="团队中没有智能体")
 
-    # TODO: 实际部署逻辑将在 OpenClaw 服务层实现
-
-    return {"message": "团队部署中", "team_id": team_id}
+    try:
+        openclaw_service = get_openclaw_service()
+        deploy_result = await openclaw_service.deploy_team(
+            team_name=team.name,
+            agents=[
+                {
+                    "id": a.id,
+                    "name": a.name,
+                    "role": a.role,
+                    "workspace": a.workspace,
+                    "config": a.config,
+                }
+                for a in team.agents
+            ],
+            collaborations=team.collaborations,
+        )
+        return {"message": "团队部署成功", "team_id": team_id, "result": deploy_result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"部署失败: {str(e)}")
 
 
 @router.post("/{team_id}/teardown")
@@ -201,6 +218,12 @@ async def teardown_team(
     if not team:
         raise HTTPException(status_code=404, detail="团队不存在")
 
-    # TODO: 实际清理逻辑将在 OpenClaw 服务层实现
-
-    return {"message": "团队清理中", "team_id": team_id}
+    try:
+        openclaw_service = get_openclaw_service()
+        teardown_result = await openclaw_service.teardown_team(
+            team_id=team_id,
+            agent_ids=[a.id for a in team.agents],
+        )
+        return {"message": "团队清理成功", "team_id": team_id, "result": teardown_result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"清理失败: {str(e)}")

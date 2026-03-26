@@ -8,6 +8,7 @@ from sqlalchemy import select
 from ..database import get_session
 from ..models import Agent, AgentStatus
 from ..schemas import AgentCreate, AgentUpdate, AgentResponse, AgentListResponse
+from ..services.openclaw_service import get_openclaw_service
 
 router = APIRouter()
 
@@ -118,11 +119,16 @@ async def start_agent(
     if not agent:
         raise HTTPException(status_code=404, detail="智能体不存在")
 
-    # TODO: 实际启动逻辑将在 OpenClaw 服务层实现
-    agent.status = AgentStatus.RUNNING
-    await session.commit()
-
-    return {"message": "智能体已启动", "agent_id": agent_id}
+    try:
+        openclaw_service = get_openclaw_service()
+        await openclaw_service.start_agent(agent_id)
+        agent.status = AgentStatus.RUNNING
+        await session.commit()
+        return {"message": "智能体已启动", "agent_id": agent_id}
+    except Exception as e:
+        agent.status = AgentStatus.ERROR
+        await session.commit()
+        raise HTTPException(status_code=500, detail=f"启动失败: {str(e)}")
 
 
 @router.post("/{agent_id}/stop")
@@ -137,8 +143,11 @@ async def stop_agent(
     if not agent:
         raise HTTPException(status_code=404, detail="智能体不存在")
 
-    # TODO: 实际停止逻辑将在 OpenClaw 服务层实现
-    agent.status = AgentStatus.STOPPED
-    await session.commit()
-
-    return {"message": "智能体已停止", "agent_id": agent_id}
+    try:
+        openclaw_service = get_openclaw_service()
+        await openclaw_service.stop_agent(agent_id)
+        agent.status = AgentStatus.STOPPED
+        await session.commit()
+        return {"message": "智能体已停止", "agent_id": agent_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"停止失败: {str(e)}")
