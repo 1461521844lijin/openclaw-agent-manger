@@ -16,7 +16,12 @@
       "Bash(uv sync:*)",
       "Bash(uv run:*)",
       "Bash(npm create:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(openclaw --help)",
+      "Bash(npx openclaw:*)",
+      "Bash(openclaw agents:*)",
+      "Bash(openclaw gateway:*)",
+      "Bash(openclaw agent:*)"
     ]
   }
 }

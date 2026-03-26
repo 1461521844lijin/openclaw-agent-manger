@@ -37,6 +37,41 @@ async def list_agents(
     )
 
 
+@router.get("/sync")
+async def sync_agents(session: AsyncSession = Depends(get_session)):
+    """从 OpenClaw 同步智能体列表"""
+    openclaw_service = get_openclaw_service()
+    openclaw_agents = await openclaw_service.list_agents()
+
+    synced = []
+    for oc_agent in openclaw_agents:
+        agent_id = oc_agent.get("id")
+        # Check if agent exists in our database
+        result = await session.execute(select(Agent).where(Agent.id == agent_id))
+        existing = result.scalar_one_or_none()
+
+        if existing:
+            # Update existing agent
+            existing.name = oc_agent.get("identityName", existing.name)
+            existing.workspace = oc_agent.get("workspace", existing.workspace)
+            existing.agent_dir = oc_agent.get("agentDir", existing.agent_dir)
+        else:
+            # Create new agent
+            agent = Agent(
+                id=agent_id,
+                name=oc_agent.get("identityName", "Unknown"),
+                role="agent",
+                workspace=oc_agent.get("workspace", ""),
+                agent_dir=oc_agent.get("agentDir"),
+                status=AgentStatus.RUNNING if oc_agent.get("isDefault") else AgentStatus.STOPPED,
+            )
+            session.add(agent)
+        synced.append(agent_id)
+
+    await session.commit()
+    return {"message": f"同步完成，共 {len(synced)} 个智能体", "agents": synced}
+
+
 @router.get("/{agent_id}", response_model=AgentResponse)
 async def get_agent(
     agent_id: str,
@@ -57,8 +92,34 @@ async def create_agent(
     data: AgentCreate,
     session: AsyncSession = Depends(get_session),
 ):
-    """创建智能体"""
-    agent = Agent(**data.model_dump())
+    """创建智能体（同时在数据库和 OpenClaw 中创建）"""
+    openclaw_service = get_openclaw_service()
+
+    # Create in OpenClaw
+    oc_result = await openclaw_service.create_agent(
+        name=data.name,
+        role=data.role,
+        workspace=data.workspace,
+    )
+
+    if not oc_result.get("success", True):
+        raise HTTPException(status_code=500, detail=f"OpenClaw 创建失败: {oc_result.get('error')}")
+
+    # Get the agent ID from OpenClaw
+    agent_id = oc_result.get("id", data.name.lower().replace(" ", "-"))
+
+    # Create in database
+    agent = Agent(
+        id=agent_id,
+        name=data.name,
+        role=data.role,
+        workspace=data.workspace,
+        agent_dir=oc_result.get("agentDir"),
+        description=data.description,
+        config=data.config,
+        team_id=data.team_id,
+        status=AgentStatus.STOPPED,
+    )
     session.add(agent)
     await session.commit()
     await session.refresh(agent)
@@ -94,17 +155,22 @@ async def delete_agent(
     agent_id: str,
     session: AsyncSession = Depends(get_session),
 ):
-    """删除智能体"""
+    """删除智能体（同时从数据库和 OpenClaw 中删除）"""
     result = await session.execute(select(Agent).where(Agent.id == agent_id))
     agent = result.scalar_one_or_none()
 
     if not agent:
         raise HTTPException(status_code=404, detail="智能体不存在")
 
+    # Delete from OpenClaw
+    openclaw_service = get_openclaw_service()
+    await openclaw_service.delete_agent(agent_id)
+
+    # Delete from database
     await session.delete(agent)
     await session.commit()
 
-    return {"message": "智能体已删除"}
+    return {"message": "智能体已删除", "agent_id": agent_id}
 
 
 @router.post("/{agent_id}/start")
@@ -112,7 +178,7 @@ async def start_agent(
     agent_id: str,
     session: AsyncSession = Depends(get_session),
 ):
-    """启动智能体"""
+    """启动智能体（确保 Gateway 运行）"""
     result = await session.execute(select(Agent).where(Agent.id == agent_id))
     agent = result.scalar_one_or_none()
 
@@ -121,10 +187,19 @@ async def start_agent(
 
     try:
         openclaw_service = get_openclaw_service()
-        await openclaw_service.start_agent(agent_id)
+
+        # Check and start gateway if needed
+        gateway_status = await openclaw_service.gateway_status()
+        if not gateway_status.get("running"):
+            await openclaw_service.start_gateway()
+
         agent.status = AgentStatus.RUNNING
         await session.commit()
-        return {"message": "智能体已启动", "agent_id": agent_id}
+        return {
+            "message": "智能体已启动",
+            "agent_id": agent_id,
+            "gateway": gateway_status.get("url", "ws://127.0.0.1:18789"),
+        }
     except Exception as e:
         agent.status = AgentStatus.ERROR
         await session.commit()
@@ -143,11 +218,32 @@ async def stop_agent(
     if not agent:
         raise HTTPException(status_code=404, detail="智能体不存在")
 
+    # Agent doesn't really "stop" individually in OpenClaw
+    # It's managed by the gateway
+    agent.status = AgentStatus.STOPPED
+    await session.commit()
+
+    return {"message": "智能体已停止", "agent_id": agent_id}
+
+
+@router.post("/{agent_id}/message")
+async def send_message_to_agent(
+    agent_id: str,
+    message: str,
+    session: AsyncSession = Depends(get_session),
+):
+    """向智能体发送消息"""
+    result = await session.execute(select(Agent).where(Agent.id == agent_id))
+    agent = result.scalar_one_or_none()
+
+    if not agent:
+        raise HTTPException(status_code=404, detail="智能体不存在")
+
     try:
         openclaw_service = get_openclaw_service()
-        await openclaw_service.stop_agent(agent_id)
-        agent.status = AgentStatus.STOPPED
-        await session.commit()
-        return {"message": "智能体已停止", "agent_id": agent_id}
+        result = await openclaw_service.send_message(agent_id, message)
+        return {"message": "消息已发送", "agent_id": agent_id, "result": result}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"停止失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"发送失败: {str(e)}")
+
+

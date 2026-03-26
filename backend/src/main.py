@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .database import init_db
-from .api import agents, teams, roles
+from .api import agents, teams, roles, gateway
 
 
 @asynccontextmanager
@@ -41,6 +41,7 @@ app.add_middleware(
 app.include_router(agents.router, prefix="/api/agents", tags=["agents"])
 app.include_router(teams.router, prefix="/api/teams", tags=["teams"])
 app.include_router(roles.router, prefix="/api/roles", tags=["roles"])
+app.include_router(gateway.router, prefix="/api/gateway", tags=["gateway"])
 
 
 @app.get("/api/health")
