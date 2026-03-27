@@ -62,3 +62,9 @@ frontend/.vite/
 .env
 .env.local
 .env.*.local
+
+# Workspace
+backend/workspace/
+
+# Claude local settings
+.claude/settings.local.json
