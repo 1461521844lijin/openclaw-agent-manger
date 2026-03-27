@@ -54,4 +54,16 @@ export const agentsApi = {
     const response = await api.post(`/agents/${id}/message`, null, { params: { message } })
     return response.data
   },
+
+  // Bind agent to channel
+  async bind(
+    id: string,
+    channel: string,
+    accountId?: string
+  ): Promise<{ message: string; result: unknown }> {
+    const response = await api.post(`/agents/${id}/bind`, null, {
+      params: { channel, account_id: accountId },
+    })
+    return response.data
+  },
 }

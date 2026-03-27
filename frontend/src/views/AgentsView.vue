@@ -19,7 +19,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-      <el-table-column label="操作" width="240" fixed="right">
+      <el-table-column label="操作" width="360" fixed="right">
         <template #default="{ row }">
           <el-button
             v-if="row.status !== 'running'"
@@ -36,6 +36,17 @@
             @click="handleStop(row.id)"
           >
             停止
+          </el-button>
+          <el-button
+            type="info"
+            size="small"
+            :disabled="row.status !== 'running'"
+            @click="openMessageDialog(row)"
+          >
+            发消息
+          </el-button>
+          <el-button type="primary" size="small" @click="openBindDialog(row)">
+            绑定
           </el-button>
           <el-button type="primary" size="small" @click="handleEdit(row)">
             编辑
@@ -73,10 +84,69 @@
         <el-form-item label="描述">
           <el-input v-model="agentForm.description" type="textarea" rows="3" />
         </el-form-item>
+        <el-divider content-position="left">飞书机器人配置</el-divider>
+        <el-form-item label="App ID">
+          <el-input v-model="agentForm.feishu_app_id" placeholder="飞书应用 App ID" />
+        </el-form-item>
+        <el-form-item label="App Secret">
+          <el-input
+            v-model="agentForm.feishu_app_secret"
+            type="password"
+            placeholder="飞书应用 App Secret"
+            show-password
+          />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
         <el-button type="primary" @click="handleSubmit">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Message Dialog -->
+    <el-dialog v-model="showMessageDialog" title="发送消息" width="500px">
+      <el-form label-width="80px">
+        <el-form-item label="智能体">
+          <el-input :value="messagingAgent?.name" disabled />
+        </el-form-item>
+        <el-form-item label="消息内容" required>
+          <el-input
+            v-model="messageContent"
+            type="textarea"
+            rows="4"
+            placeholder="请输入要发送的消息"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showMessageDialog = false">取消</el-button>
+        <el-button type="primary" :loading="sendingMessage" @click="handleSendMessage">
+          发送
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- Bind Channel Dialog -->
+    <el-dialog v-model="showBindDialog" title="绑定通道" width="500px">
+      <el-form label-width="80px">
+        <el-form-item label="智能体">
+          <el-input :value="bindingAgent?.name" disabled />
+        </el-form-item>
+        <el-form-item label="通道类型" required>
+          <el-select v-model="bindForm.channel" placeholder="请选择通道类型" style="width: 100%">
+            <el-option label="飞书 (Feishu)" value="feishu" />
+            <el-option label="Telegram" value="telegram" />
+            <el-option label="Discord" value="discord" />
+            <el-option label="WhatsApp" value="whatsapp" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="账户 ID">
+          <el-input v-model="bindForm.accountId" placeholder="可选，账户标识" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showBindDialog = false">取消</el-button>
+        <el-button type="primary" :loading="binding" @click="handleBind">绑定</el-button>
       </template>
     </el-dialog>
   </div>
@@ -100,7 +170,24 @@ const agentForm = reactive({
   role: '',
   workspace: './workspace',
   description: '',
+  feishu_app_id: '',
+  feishu_app_secret: '',
 })
+
+// Message dialog state
+const showMessageDialog = ref(false)
+const messagingAgent = ref<Agent | null>(null)
+const messageContent = ref('')
+const sendingMessage = ref(false)
+
+// Bind dialog state
+const showBindDialog = ref(false)
+const bindingAgent = ref<Agent | null>(null)
+const bindForm = reactive({
+  channel: '',
+  accountId: '',
+})
+const binding = ref(false)
 
 function getStatusType(status: AgentStatus) {
   const types: Record<AgentStatus, string> = {
@@ -146,6 +233,8 @@ function handleEdit(agent: Agent) {
   agentForm.role = agent.role
   agentForm.workspace = agent.workspace
   agentForm.description = agent.description || ''
+  agentForm.feishu_app_id = agent.feishu_app_id || ''
+  agentForm.feishu_app_secret = agent.feishu_app_secret || ''
   showCreateDialog.value = true
 }
 
@@ -158,6 +247,62 @@ async function handleDelete(id: string) {
     ElMessage.success('删除成功')
   } catch {
     // User cancelled
+  }
+}
+
+function openMessageDialog(agent: Agent) {
+  messagingAgent.value = agent
+  messageContent.value = ''
+  showMessageDialog.value = true
+}
+
+async function handleSendMessage() {
+  if (!messageContent.value.trim()) {
+    ElMessage.warning('请输入消息内容')
+    return
+  }
+  if (!messagingAgent.value) return
+
+  sendingMessage.value = true
+  try {
+    await agentsApi.message(messagingAgent.value.id, messageContent.value)
+    ElMessage.success('消息已发送')
+    showMessageDialog.value = false
+    messageContent.value = ''
+  } catch (e) {
+    ElMessage.error('发送失败')
+  } finally {
+    sendingMessage.value = false
+  }
+}
+
+function openBindDialog(agent: Agent) {
+  bindingAgent.value = agent
+  bindForm.channel = ''
+  bindForm.accountId = ''
+  showBindDialog.value = true
+}
+
+async function handleBind() {
+  if (!bindForm.channel) {
+    ElMessage.warning('请选择通道类型')
+    return
+  }
+  if (!bindingAgent.value) return
+
+  binding.value = true
+  try {
+    await agentsApi.bind(
+      bindingAgent.value.id,
+      bindForm.channel,
+      bindForm.accountId || undefined
+    )
+    ElMessage.success('绑定成功')
+    showBindDialog.value = false
+  } catch (e) {
+    ElMessage.error('绑定失败')
+  } finally {
+    binding.value = false
   }
 }
 
@@ -177,7 +322,14 @@ async function handleSubmit() {
     }
     showCreateDialog.value = false
     editingAgent.value = null
-    Object.assign(agentForm, { name: '', role: '', workspace: './workspace', description: '' })
+    Object.assign(agentForm, {
+      name: '',
+      role: '',
+      workspace: './workspace',
+      description: '',
+      feishu_app_id: '',
+      feishu_app_secret: '',
+    })
     agentsStore.fetchAgents()
   } catch (e) {
     ElMessage.error('操作失败')

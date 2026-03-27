@@ -119,6 +119,8 @@ async def create_agent(
         description=data.description,
         config=data.config,
         team_id=data.team_id,
+        feishu_app_id=data.feishu_app_id,
+        feishu_app_secret=data.feishu_app_secret,
         status=AgentStatus.STOPPED,
     )
     session.add(agent)

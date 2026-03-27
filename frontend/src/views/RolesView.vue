@@ -2,7 +2,7 @@
   <div class="roles-view">
     <div class="page-header">
       <h1 class="page-title">角色库</h1>
-      <el-button type="primary" @click="showCreateDialog = true">
+      <el-button type="primary" @click="openCreateDialog">
         <el-icon><Plus /></el-icon>
         创建角色
       </el-button>
@@ -35,6 +35,9 @@
                 <strong>核心使命：</strong>{{ role.core_mission }}
               </div>
               <div class="role-actions" v-if="!role.is_builtin">
+                <el-button type="primary" size="small" @click="handleEdit(role)">
+                  编辑
+                </el-button>
                 <el-button type="danger" size="small" @click="handleDelete(role.id)">
                   删除
                 </el-button>
@@ -45,8 +48,12 @@
       </el-collapse-item>
     </el-collapse>
 
-    <!-- Create Dialog -->
-    <el-dialog v-model="showCreateDialog" title="创建自定义角色" width="500px">
+    <!-- Create/Edit Dialog -->
+    <el-dialog
+      v-model="showCreateDialog"
+      :title="editingRole ? '编辑角色' : '创建自定义角色'"
+      width="500px"
+    >
       <el-form :model="roleForm" label-width="80px">
         <el-form-item label="名称" required>
           <el-input v-model="roleForm.name" placeholder="中文名称" />
@@ -69,7 +76,9 @@
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleCreate">创建</el-button>
+        <el-button type="primary" @click="handleSubmit">
+          {{ editingRole ? '保存' : '创建' }}
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -80,11 +89,13 @@ import { ref, onMounted, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRolesStore } from '../stores/roles'
 import { rolesApi } from '../api/roles'
+import type { Role } from '../types'
 
 const rolesStore = useRolesStore()
 
 const activeCategories = ref<string[]>([])
 const showCreateDialog = ref(false)
+const editingRole = ref<Role | null>(null)
 const roleForm = reactive({
   name: '',
   name_en: '',
@@ -107,16 +118,46 @@ async function handleDelete(id: string) {
   }
 }
 
-async function handleCreate() {
+function openCreateDialog() {
+  editingRole.value = null
+  Object.assign(roleForm, {
+    name: '',
+    name_en: '',
+    emoji: '',
+    description: '',
+    core_mission: '',
+    category: '',
+  })
+  showCreateDialog.value = true
+}
+
+function handleEdit(role: Role) {
+  editingRole.value = role
+  roleForm.name = role.name
+  roleForm.name_en = role.name_en
+  roleForm.emoji = role.emoji || ''
+  roleForm.description = role.description || ''
+  roleForm.core_mission = role.core_mission || ''
+  roleForm.category = role.category || ''
+  showCreateDialog.value = true
+}
+
+async function handleSubmit() {
   if (!roleForm.name || !roleForm.name_en) {
     ElMessage.warning('请填写必填项')
     return
   }
 
   try {
-    await rolesApi.create(roleForm)
-    ElMessage.success('创建成功')
+    if (editingRole.value) {
+      await rolesApi.update(editingRole.value.id, roleForm)
+      ElMessage.success('更新成功')
+    } else {
+      await rolesApi.create(roleForm)
+      ElMessage.success('创建成功')
+    }
     showCreateDialog.value = false
+    editingRole.value = null
     Object.assign(roleForm, {
       name: '',
       name_en: '',
@@ -127,7 +168,7 @@ async function handleCreate() {
     })
     rolesStore.fetchCategories()
   } catch (e) {
-    ElMessage.error('创建失败')
+    ElMessage.error(editingRole.value ? '更新失败' : '创建失败')
   }
 }
 

@@ -12,6 +12,8 @@ export interface Agent {
   config?: Record<string, unknown>
   status: AgentStatus
   team_id?: string
+  feishu_app_id?: string
+  feishu_app_secret?: string
   created_at: string
   updated_at: string
 }
@@ -24,6 +26,8 @@ export interface AgentCreate {
   description?: string
   config?: Record<string, unknown>
   team_id?: string
+  feishu_app_id?: string
+  feishu_app_secret?: string
 }
 
 export interface AgentUpdate {
@@ -34,6 +38,8 @@ export interface AgentUpdate {
   description?: string
   config?: Record<string, unknown>
   team_id?: string
+  feishu_app_id?: string
+  feishu_app_secret?: string
 }
 
 export interface CollaborationRule {

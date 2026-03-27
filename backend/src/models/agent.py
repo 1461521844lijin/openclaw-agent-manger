@@ -42,6 +42,9 @@ class Agent(Base):
     team_id: Mapped[Optional[str]] = mapped_column(
         String(36), ForeignKey("teams.id"), nullable=True
     )
+    # Feishu Bot configuration
+    feishu_app_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    feishu_app_secret: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow

@@ -23,6 +23,8 @@ class AgentCreate(AgentBase):
     """Create agent schema"""
 
     team_id: Optional[str] = Field(None, description="所属团队ID")
+    feishu_app_id: Optional[str] = Field(None, description="飞书应用 App ID")
+    feishu_app_secret: Optional[str] = Field(None, description="飞书应用 App Secret")
 
 
 class AgentUpdate(BaseModel):
@@ -35,6 +37,15 @@ class AgentUpdate(BaseModel):
     description: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
     team_id: Optional[str] = None
+    feishu_app_id: Optional[str] = Field(None, description="飞书应用 App ID")
+    feishu_app_secret: Optional[str] = Field(None, description="飞书应用 App Secret")
+
+
+class FeishuConfig(BaseModel):
+    """Feishu Bot configuration schema"""
+
+    app_id: str = Field(..., description="飞书应用 App ID")
+    app_secret: str = Field(..., description="飞书应用 App Secret")
 
 
 class AgentResponse(AgentBase):
@@ -43,6 +54,8 @@ class AgentResponse(AgentBase):
     id: str
     status: AgentStatus = AgentStatus.STOPPED
     team_id: Optional[str] = None
+    feishu_app_id: Optional[str] = Field(None, description="飞书应用 App ID")
+    feishu_app_secret: Optional[str] = Field(None, description="飞书应用 App Secret (只返回是否已配置)")
     created_at: datetime
     updated_at: datetime
 

@@ -72,6 +72,43 @@
             />
           </el-select>
         </el-form-item>
+        <el-divider content-position="left">协作规则</el-divider>
+        <el-form-item label="">
+          <div class="collaboration-rules">
+            <div
+              v-for="(rule, index) in teamForm.collaborations"
+              :key="index"
+              class="rule-item"
+            >
+              <el-select v-model="rule.source_id" placeholder="源智能体" size="small" style="width: 120px">
+                <el-option
+                  v-for="agent in selectedAgents"
+                  :key="agent.id"
+                  :label="agent.name"
+                  :value="agent.id"
+                />
+              </el-select>
+              <el-select v-model="rule.target_id" placeholder="目标智能体" size="small" style="width: 120px">
+                <el-option
+                  v-for="agent in selectedAgents"
+                  :key="agent.id"
+                  :label="agent.name"
+                  :value="agent.id"
+                />
+              </el-select>
+              <el-input v-model="rule.trigger" placeholder="触发条件" size="small" style="width: 150px" />
+              <el-button type="danger" size="small" @click="removeRule(index)">
+                删除
+              </el-button>
+            </div>
+            <el-button type="primary" size="small" @click="addRule" :disabled="teamForm.agent_ids.length < 2">
+              添加规则
+            </el-button>
+            <span v-if="teamForm.agent_ids.length < 2" class="rule-hint">
+              （至少选择2个智能体才能添加协作规则）
+            </span>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showFormDialog = false">取消</el-button>
@@ -130,12 +167,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useTeamsStore } from '../stores/teams'
 import { useAgentsStore } from '../stores/agents'
 import { teamsApi } from '../api/teams'
-import type { Team, TeamDetail } from '../types'
+import type { Team, TeamDetail, CollaborationRule } from '../types'
 import TopologyGraph from '../components/TopologyGraph.vue'
 
 const teamsStore = useTeamsStore()
@@ -151,6 +188,11 @@ const teamForm = reactive({
   name: '',
   description: '',
   agent_ids: [] as string[],
+  collaborations: [] as CollaborationRule[],
+})
+
+const selectedAgents = computed(() => {
+  return agentsStore.agents.filter((a) => teamForm.agent_ids.includes(a.id))
 })
 
 function getAgentName(id: string) {
@@ -180,7 +222,7 @@ function getStatusLabel(status: string) {
 
 function openCreateDialog() {
   editingTeam.value = null
-  Object.assign(teamForm, { name: '', description: '', agent_ids: [] })
+  Object.assign(teamForm, { name: '', description: '', agent_ids: [], collaborations: [] })
   showFormDialog.value = true
 }
 
@@ -190,8 +232,21 @@ function openEditDialog(team: Team) {
     name: team.name,
     description: team.description || '',
     agent_ids: [...team.agents],
+    collaborations: team.collaborations ? JSON.parse(JSON.stringify(team.collaborations)) : [],
   })
   showFormDialog.value = true
+}
+
+function addRule() {
+  teamForm.collaborations.push({
+    source_id: '',
+    target_id: '',
+    trigger: '',
+  })
+}
+
+function removeRule(index: number) {
+  teamForm.collaborations.splice(index, 1)
 }
 
 async function openDetailDialog(team: Team) {
@@ -211,11 +266,15 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
+    const collaborations = teamForm.collaborations.filter(
+      (r) => r.source_id && r.target_id && r.trigger
+    )
     if (editingTeam.value) {
       await teamsApi.update(editingTeam.value.id, {
         name: teamForm.name,
         description: teamForm.description,
         agent_ids: teamForm.agent_ids,
+        collaborations,
       })
       ElMessage.success('更新成功')
     } else {
@@ -223,6 +282,7 @@ async function handleSubmit() {
         name: teamForm.name,
         description: teamForm.description,
         agent_ids: teamForm.agent_ids,
+        collaborations,
       })
       ElMessage.success('创建成功')
     }
@@ -305,5 +365,22 @@ onMounted(() => {
 .team-actions {
   display: flex;
   gap: 8px;
+}
+
+.collaboration-rules {
+  width: 100%;
+}
+
+.rule-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.rule-hint {
+  color: #909399;
+  font-size: 12px;
+  margin-left: 8px;
 }
 </style>
