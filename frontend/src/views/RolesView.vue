@@ -8,43 +8,57 @@
       </el-button>
     </div>
 
-    <el-collapse v-model="activeCategories" v-loading="rolesStore.loading">
+    <el-collapse v-model="activeCategories" v-loading="rolesStore.loading" class="category-collapse">
       <el-collapse-item
         v-for="category in rolesStore.categories"
         :key="category.id"
         :name="category.id"
+        class="category-item"
       >
         <template #title>
-          <span class="category-title">{{ category.label }}</span>
-          <el-tag size="small" class="category-count">{{ category.items.length }}</el-tag>
+          <div class="category-header">
+            <span class="category-title">{{ category.label }}</span>
+            <span class="category-count">{{ category.items.length }}</span>
+          </div>
         </template>
 
-        <el-row :gutter="16">
-          <el-col :span="8" v-for="role in category.items" :key="role.id">
-            <el-card class="role-card" shadow="hover">
+        <div class="roles-grid">
+          <div
+            v-for="role in category.items"
+            :key="role.id"
+            class="role-card fade-in"
+          >
+            <div class="card-gradient-bar"></div>
+            <div class="card-content">
               <div class="role-header">
-                <span class="role-emoji">{{ role.emoji || '🤖' }}</span>
+                <div class="role-emoji">{{ role.emoji || '🤖' }}</div>
                 <div class="role-info">
-                  <div class="role-name">{{ role.name }}</div>
-                  <div class="role-name-en">{{ role.name_en }}</div>
+                  <h3 class="role-name">{{ role.name }}</h3>
+                  <span class="role-name-en">{{ role.name_en }}</span>
                 </div>
-                <el-tag v-if="role.is_builtin" size="small" type="info">内置</el-tag>
+                <el-tag v-if="role.is_builtin" size="small" type="info" class="builtin-tag">内置</el-tag>
               </div>
-              <p class="role-desc">{{ role.description }}</p>
+
+              <p class="role-desc">{{ role.description || '暂无描述' }}</p>
+
               <div class="role-mission" v-if="role.core_mission">
-                <strong>核心使命：</strong>{{ role.core_mission }}
+                <el-icon class="mission-icon"><Aim /></el-icon>
+                <span>{{ role.core_mission }}</span>
               </div>
+
               <div class="role-actions" v-if="!role.is_builtin">
                 <el-button type="primary" size="small" @click="handleEdit(role)">
+                  <el-icon><Edit /></el-icon>
                   编辑
                 </el-button>
                 <el-button type="danger" size="small" @click="handleDelete(role.id)">
+                  <el-icon><Delete /></el-icon>
                   删除
                 </el-button>
               </div>
-            </el-card>
-          </el-col>
-        </el-row>
+            </div>
+          </div>
+        </div>
       </el-collapse-item>
     </el-collapse>
 
@@ -180,17 +194,86 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.category-collapse {
+  border: none;
+}
+
+.category-item {
+  margin-bottom: 20px;
+  border: none;
+}
+
+.category-item :deep(.el-collapse-item__header) {
+  background: var(--surface-color);
+  border-radius: var(--border-radius);
+  padding: 0 20px;
+  height: 56px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--surface-shadow);
+  transition: all var(--transition-normal);
+}
+
+.category-item :deep(.el-collapse-item__header:hover) {
+  box-shadow: var(--surface-shadow-hover);
+}
+
+.category-item :deep(.el-collapse-item__wrap) {
+  border: none;
+  background: transparent;
+}
+
+.category-item :deep(.el-collapse-item__content) {
+  padding-top: 16px;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .category-title {
   font-weight: 600;
   font-size: 16px;
+  color: var(--text-primary);
 }
 
 .category-count {
-  margin-left: 8px;
+  background: var(--primary-gradient);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.roles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .role-card {
-  margin-bottom: 16px;
+  background: var(--surface-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--surface-shadow);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.role-card:hover {
+  box-shadow: var(--surface-shadow-hover);
+  transform: translateY(-2px);
+}
+
+.card-gradient-bar {
+  height: 3px;
+  background: linear-gradient(135deg, #e6a23c 0%, #f56c6c 100%);
+}
+
+.card-content {
+  padding: 16px;
 }
 
 .role-header {
@@ -201,39 +284,86 @@ onMounted(async () => {
 }
 
 .role-emoji {
-  font-size: 32px;
+  font-size: 36px;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(230, 162, 60, 0.1) 0%, rgba(245, 108, 108, 0.1) 100%);
+  border-radius: 12px;
 }
 
 .role-info {
   flex: 1;
+  min-width: 0;
 }
 
 .role-name {
+  font-size: 15px;
   font-weight: 600;
-  font-size: 16px;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
 }
 
 .role-name-en {
-  color: #909399;
   font-size: 12px;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.builtin-tag {
+  border-radius: 12px;
 }
 
 .role-desc {
-  color: #606266;
-  font-size: 14px;
-  margin-bottom: 8px;
+  color: var(--text-regular);
+  font-size: 13px;
+  margin-bottom: 12px;
+  line-height: 1.6;
+  min-height: 40px;
 }
 
 .role-mission {
-  background: #f5f7fa;
-  padding: 8px;
-  border-radius: 4px;
-  font-size: 13px;
-  color: #606266;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--primary-gradient-soft);
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-regular);
+  border: 1px solid rgba(64, 158, 255, 0.1);
+  margin-bottom: 12px;
+}
+
+.mission-icon {
+  color: var(--primary-color);
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .role-actions {
-  margin-top: 12px;
-  text-align: right;
+  display: flex;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
 }
+
+.role-actions .el-button {
+  border-radius: 8px;
+  flex: 1;
+}
+
+/* Animations */
+.role-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.role-card:nth-child(1) { animation-delay: 0.02s; }
+.role-card:nth-child(2) { animation-delay: 0.04s; }
+.role-card:nth-child(3) { animation-delay: 0.06s; }
+.role-card:nth-child(4) { animation-delay: 0.08s; }
+.role-card:nth-child(5) { animation-delay: 0.1s; }
+.role-card:nth-child(6) { animation-delay: 0.12s; }
 </style>

@@ -8,55 +8,76 @@
       </el-button>
     </div>
 
-    <el-table :data="agentsStore.agents" v-loading="agentsStore.loading" stripe>
-      <el-table-column prop="name" label="名称" min-width="120" />
-      <el-table-column prop="role" label="角色" width="120" />
-      <el-table-column label="状态" width="100">
-        <template #default="{ row }">
-          <el-tag :type="getStatusType(row.status)">
-            {{ getStatusLabel(row.status) }}
-          </el-tag>
-        </template>
-      </el-table-column>
-      <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-      <el-table-column label="操作" width="360" fixed="right">
-        <template #default="{ row }">
-          <el-button
-            v-if="row.status !== 'running'"
-            type="success"
-            size="small"
-            @click="handleStart(row.id)"
-          >
-            启动
-          </el-button>
-          <el-button
-            v-else
-            type="warning"
-            size="small"
-            @click="handleStop(row.id)"
-          >
-            停止
-          </el-button>
-          <el-button
-            type="info"
-            size="small"
-            :disabled="row.status !== 'running'"
-            @click="openMessageDialog(row)"
-          >
-            发消息
-          </el-button>
-          <el-button type="primary" size="small" @click="openBindDialog(row)">
-            绑定
-          </el-button>
-          <el-button type="primary" size="small" @click="handleEdit(row)">
-            编辑
-          </el-button>
-          <el-button type="danger" size="small" @click="handleDelete(row.id)">
-            删除
-          </el-button>
-        </template>
-      </el-table-column>
-    </el-table>
+    <div class="agents-grid" v-loading="agentsStore.loading">
+      <div
+        v-for="agent in agentsStore.agents"
+        :key="agent.id"
+        class="agent-card fade-in"
+      >
+        <div class="card-gradient-bar"></div>
+        <div class="card-content">
+          <div class="card-header">
+            <div class="agent-avatar">
+              <span class="avatar-text">{{ agent.name.charAt(0).toUpperCase() }}</span>
+            </div>
+            <div class="agent-info">
+              <h3 class="agent-name">{{ agent.name }}</h3>
+              <span class="agent-role">{{ agent.role }}</span>
+            </div>
+            <span :class="['status-tag', agent.status]">
+              {{ getStatusLabel(agent.status) }}
+            </span>
+          </div>
+
+          <p class="agent-desc">{{ agent.description || '暂无描述' }}</p>
+
+          <div class="card-footer">
+            <div class="action-buttons">
+              <el-button
+                v-if="agent.status !== 'running'"
+                type="success"
+                size="small"
+                @click="handleStart(agent.id)"
+              >
+                <el-icon><VideoPlay /></el-icon>
+                启动
+              </el-button>
+              <el-button
+                v-else
+                type="warning"
+                size="small"
+                @click="handleStop(agent.id)"
+              >
+                <el-icon><VideoPause /></el-icon>
+                停止
+              </el-button>
+              <el-button
+                type="info"
+                size="small"
+                :disabled="agent.status !== 'running'"
+                @click="openMessageDialog(agent)"
+              >
+                <el-icon><ChatDotRound /></el-icon>
+              </el-button>
+              <el-button type="primary" size="small" @click="openBindDialog(agent)">
+                <el-icon><Link /></el-icon>
+              </el-button>
+              <el-button size="small" @click="handleEdit(agent)">
+                <el-icon><Edit /></el-icon>
+              </el-button>
+              <el-button type="danger" size="small" @click="handleDelete(agent.id)">
+                <el-icon><Delete /></el-icon>
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="!agentsStore.loading && agentsStore.agents.length === 0" class="empty-state">
+        <el-empty description="暂无智能体，点击上方按钮创建" />
+      </div>
+    </div>
 
     <!-- Create/Edit Dialog -->
     <el-dialog
@@ -341,3 +362,124 @@ onMounted(() => {
   rolesStore.fetchRoles()
 })
 </script>
+
+<style scoped>
+.agents-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.agent-card {
+  background: var(--surface-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--surface-shadow);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  position: relative;
+}
+
+.agent-card:hover {
+  box-shadow: var(--surface-shadow-hover);
+  transform: translateY(-4px);
+}
+
+.card-gradient-bar {
+  height: 4px;
+  background: var(--primary-gradient);
+}
+
+.card-content {
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.agent-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--primary-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.25);
+}
+
+.avatar-text {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.agent-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.agent-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agent-role {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.agent-desc {
+  color: var(--text-regular);
+  font-size: 14px;
+  margin-bottom: 16px;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 44px;
+}
+
+.card-footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.action-buttons .el-button {
+  border-radius: 8px;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  padding: 60px 20px;
+  text-align: center;
+}
+
+/* Animations */
+.agent-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.agent-card:nth-child(1) { animation-delay: 0.05s; }
+.agent-card:nth-child(2) { animation-delay: 0.1s; }
+.agent-card:nth-child(3) { animation-delay: 0.15s; }
+.agent-card:nth-child(4) { animation-delay: 0.2s; }
+.agent-card:nth-child(5) { animation-delay: 0.25s; }
+.agent-card:nth-child(6) { animation-delay: 0.3s; }
+</style>

@@ -8,46 +8,64 @@
       </el-button>
     </div>
 
-    <el-row :gutter="20">
-      <el-col :span="8" v-for="team in teamsStore.teams" :key="team.id">
-        <el-card class="team-card" shadow="hover">
-          <template #header>
-            <div class="team-header">
-              <span class="team-name">{{ team.name }}</span>
-              <el-tag size="small">{{ team.agents.length }} 个智能体</el-tag>
+    <div class="teams-grid">
+      <div
+        v-for="team in teamsStore.teams"
+        :key="team.id"
+        class="team-card fade-in"
+      >
+        <div class="card-gradient-bar"></div>
+        <div class="card-content">
+          <div class="card-header">
+            <div class="team-icon">
+              <el-icon :size="24"><Collection /></el-icon>
             </div>
-          </template>
+            <div class="team-info">
+              <h3 class="team-name">{{ team.name }}</h3>
+              <span class="team-count">{{ team.agents.length }} 个智能体</span>
+            </div>
+          </div>
+
           <p class="team-desc">{{ team.description || '暂无描述' }}</p>
+
           <div class="team-agents">
-            <el-tag
-              v-for="agentId in team.agents.slice(0, 3)"
+            <div
+              v-for="agentId in team.agents.slice(0, 4)"
               :key="agentId"
-              size="small"
-              class="agent-tag"
+              class="agent-chip"
             >
               {{ getAgentName(agentId) }}
-            </el-tag>
-            <el-tag v-if="team.agents.length > 3" size="small" type="info">
-              +{{ team.agents.length - 3 }}
-            </el-tag>
+            </div>
+            <div v-if="team.agents.length > 4" class="agent-chip more">
+              +{{ team.agents.length - 4 }}
+            </div>
           </div>
-          <div class="team-actions">
+
+          <div class="card-footer">
             <el-button type="primary" size="small" @click="openDetailDialog(team)">
+              <el-icon><View /></el-icon>
               详情
             </el-button>
-            <el-button type="info" size="small" @click="openEditDialog(team)">
+            <el-button size="small" @click="openEditDialog(team)">
+              <el-icon><Edit /></el-icon>
               编辑
             </el-button>
             <el-button type="success" size="small" @click="handleDeploy(team.id)">
+              <el-icon><Promotion /></el-icon>
               部署
             </el-button>
             <el-button type="danger" size="small" @click="handleDelete(team.id)">
-              删除
+              <el-icon><Delete /></el-icon>
             </el-button>
           </div>
-        </el-card>
-      </el-col>
-    </el-row>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="!teamsStore.loading && teamsStore.teams.length === 0" class="empty-state">
+        <el-empty description="暂无团队，点击上方按钮创建" />
+      </div>
+    </div>
 
     <!-- Create/Edit Dialog -->
     <el-dialog
@@ -332,39 +350,116 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.team-card {
-  margin-bottom: 20px;
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
 }
 
-.team-header {
+.team-card {
+  background: var(--surface-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--surface-shadow);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.team-card:hover {
+  box-shadow: var(--surface-shadow-hover);
+  transform: translateY(-4px);
+}
+
+.card-gradient-bar {
+  height: 4px;
+  background: linear-gradient(135deg, #67c23a 0%, #409eff 100%);
+}
+
+.card-content {
+  padding: 20px;
+}
+
+.card-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.team-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(103, 194, 58, 0.1) 0%, rgba(64, 158, 255, 0.1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
+}
+
+.team-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .team-name {
-  font-weight: 600;
   font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.team-count {
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
 .team-desc {
-  color: #909399;
+  color: var(--text-regular);
   font-size: 14px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  line-height: 1.6;
+  min-height: 44px;
 }
 
 .team-agents {
-  margin-bottom: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
 }
 
-.agent-tag {
-  margin-right: 4px;
-  margin-bottom: 4px;
+.agent-chip {
+  padding: 4px 12px;
+  background: var(--primary-gradient-soft);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--primary-color);
+  border: 1px solid rgba(64, 158, 255, 0.2);
 }
 
-.team-actions {
+.agent-chip.more {
+  background: rgba(144, 147, 153, 0.1);
+  color: var(--text-secondary);
+  border-color: rgba(144, 147, 153, 0.2);
+}
+
+.card-footer {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.card-footer .el-button {
+  border-radius: 8px;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  padding: 60px 20px;
+  text-align: center;
 }
 
 .collaboration-rules {
@@ -379,8 +474,20 @@ onMounted(() => {
 }
 
 .rule-hint {
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 12px;
   margin-left: 8px;
 }
+
+/* Animations */
+.team-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.team-card:nth-child(1) { animation-delay: 0.05s; }
+.team-card:nth-child(2) { animation-delay: 0.1s; }
+.team-card:nth-child(3) { animation-delay: 0.15s; }
+.team-card:nth-child(4) { animation-delay: 0.2s; }
+.team-card:nth-child(5) { animation-delay: 0.25s; }
+.team-card:nth-child(6) { animation-delay: 0.3s; }
 </style>

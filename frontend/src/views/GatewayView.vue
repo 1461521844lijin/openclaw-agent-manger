@@ -5,41 +5,46 @@
     </div>
 
     <!-- Status Card -->
-    <el-card class="status-card">
-      <template #header>
+    <div class="status-card fade-in">
+      <div class="card-gradient-bar" :class="{ running: status?.running }"></div>
+      <div class="card-content">
         <div class="card-header">
-          <span>服务状态</span>
+          <div class="header-left">
+            <div class="status-icon" :class="{ active: status?.running }">
+              <el-icon :size="28"><Connection /></el-icon>
+            </div>
+            <div class="header-info">
+              <h3>服务状态</h3>
+              <span class="status-text">
+                <span class="status-dot" :class="{ active: status?.running }"></span>
+                {{ status?.running ? '运行中' : '已停止' }}
+              </span>
+            </div>
+          </div>
           <el-button type="primary" size="small" @click="refreshStatus">
             <el-icon><Refresh /></el-icon>
             刷新
           </el-button>
         </div>
-      </template>
 
-      <div v-loading="loading" class="status-content">
-        <div class="status-item">
-          <span class="label">运行状态：</span>
-          <el-tag :type="status?.running ? 'success' : 'danger'" size="large">
-            {{ status?.running ? '运行中' : '已停止' }}
-          </el-tag>
+        <div v-loading="loading" class="status-details">
+          <div class="detail-item" v-if="status?.port">
+            <span class="detail-label">端口</span>
+            <span class="detail-value port">{{ status.port }}</span>
+          </div>
+
+          <div class="detail-item" v-if="status?.url">
+            <span class="detail-label">WebSocket URL</span>
+            <code class="detail-value code">{{ status.url }}</code>
+          </div>
+
+          <div class="detail-item error" v-if="status?.error">
+            <span class="detail-label">错误信息</span>
+            <el-alert :title="status.error" type="error" :closable="false" show-icon />
+          </div>
         </div>
 
-        <div class="status-item" v-if="status?.port">
-          <span class="label">端口：</span>
-          <span class="value">{{ status.port }}</span>
-        </div>
-
-        <div class="status-item" v-if="status?.url">
-          <span class="label">WebSocket URL：</span>
-          <el-tag type="info">{{ status.url }}</el-tag>
-        </div>
-
-        <div class="status-item" v-if="status?.error">
-          <span class="label">错误信息：</span>
-          <el-alert :title="status.error" type="error" :closable="false" />
-        </div>
-
-        <div class="actions">
+        <div class="action-buttons">
           <el-button
             type="success"
             size="large"
@@ -62,36 +67,52 @@
           </el-button>
         </div>
       </div>
-    </el-card>
+    </div>
 
     <!-- OpenClaw Agents -->
-    <el-card class="agents-card">
-      <template #header>
+    <div class="agents-card fade-in">
+      <div class="card-gradient-bar agents"></div>
+      <div class="card-content">
         <div class="card-header">
-          <span>OpenClaw 智能体列表</span>
+          <div class="header-left">
+            <div class="header-icon agents">
+              <el-icon :size="24"><User /></el-icon>
+            </div>
+            <h3>OpenClaw 智能体列表</h3>
+          </div>
           <el-button type="primary" size="small" @click="syncAgents">
             <el-icon><Refresh /></el-icon>
             同步到本地
           </el-button>
         </div>
-      </template>
 
-      <el-table :data="openclawAgents" v-loading="agentsLoading" stripe>
-        <el-table-column prop="id" label="ID" width="120" />
-        <el-table-column prop="identityName" label="名称" width="150">
-          <template #default="{ row }">
-            {{ row.identityEmoji }} {{ row.identityName }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="model" label="模型" min-width="200" show-overflow-tooltip />
-        <el-table-column label="默认" width="80">
-          <template #default="{ row }">
-            <el-tag v-if="row.isDefault" type="success" size="small">是</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="workspace" label="工作目录" min-width="200" show-overflow-tooltip />
-      </el-table>
-    </el-card>
+        <el-table :data="openclawAgents" v-loading="agentsLoading" stripe class="agents-table">
+          <el-table-column prop="id" label="ID" width="120">
+            <template #default="{ row }">
+              <code class="agent-id">{{ row.id?.slice(0, 8) }}</code>
+            </template>
+          </el-table-column>
+          <el-table-column prop="identityName" label="名称" width="150">
+            <template #default="{ row }">
+              <span class="agent-name">
+                {{ row.identityEmoji }} {{ row.identityName }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="model" label="模型" min-width="200" show-overflow-tooltip />
+          <el-table-column label="默认" width="80">
+            <template #default="{ row }">
+              <el-tag v-if="row.isDefault" type="success" size="small" class="default-tag">是</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="workspace" label="工作目录" min-width="200" show-overflow-tooltip>
+            <template #default="{ row }">
+              <code class="workspace-path">{{ row.workspace }}</code>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -184,40 +205,201 @@ onMounted(() => {
 <style scoped>
 .status-card,
 .agents-card {
-  margin-bottom: 20px;
+  background: var(--surface-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--surface-shadow);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.card-gradient-bar {
+  height: 4px;
+  background: linear-gradient(135deg, #909399 0%, #606266 100%);
+  transition: background var(--transition-normal);
+}
+
+.card-gradient-bar.running {
+  background: var(--success-gradient);
+}
+
+.card-gradient-bar.agents {
+  background: linear-gradient(135deg, #409eff 0%, #337ecc 100%);
+}
+
+.card-content {
+  padding: 24px;
 }
 
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 24px;
 }
 
-.status-content {
-  padding: 20px 0;
-}
-
-.status-item {
+.header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  gap: 16px;
 }
 
-.status-item .label {
+.status-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(144, 147, 153, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all var(--transition-normal);
+}
+
+.status-icon.active {
+  background: rgba(103, 194, 58, 0.1);
+  color: var(--success-color);
+}
+
+.header-info h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px 0;
+}
+
+.status-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-secondary);
+}
+
+.status-dot.active {
+  background: var(--success-color);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.header-icon.agents {
+  background: var(--primary-gradient);
+}
+
+.card-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.status-details {
+  margin-bottom: 24px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-item.error {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detail-label {
   font-weight: 500;
-  color: #606266;
+  color: var(--text-secondary);
   min-width: 120px;
+  font-size: 14px;
 }
 
-.status-item .value {
+.detail-value {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.detail-value.port {
   font-family: monospace;
-  color: #303133;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--primary-color);
 }
 
-.actions {
-  margin-top: 24px;
+.detail-value.code {
+  background: rgba(64, 158, 255, 0.1);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--primary-color);
+}
+
+.action-buttons {
   display: flex;
   gap: 16px;
+}
+
+.action-buttons .el-button {
+  border-radius: 10px;
+  padding: 12px 24px;
+}
+
+.agents-table {
+  margin-top: 16px;
+}
+
+.agent-id {
+  font-family: monospace;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.agent-name {
+  font-weight: 500;
+}
+
+.default-tag {
+  border-radius: 12px;
+}
+
+.workspace-path {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Animations */
+.status-card,
+.agents-card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.agents-card {
+  animation-delay: 0.1s;
 }
 </style>
