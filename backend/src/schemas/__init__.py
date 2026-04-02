@@ -6,6 +6,8 @@ from .agent import (
     AgentListResponse,
     AgentResponse,
     AgentUpdate,
+    BindChannelRequest,
+    SendMessageRequest,
 )
 from .role import (
     RoleBase,
@@ -33,6 +35,8 @@ __all__ = [
     "AgentUpdate",
     "AgentResponse",
     "AgentListResponse",
+    "SendMessageRequest",
+    "BindChannelRequest",
     # Team
     "CollaborationRule",
     "TeamBase",

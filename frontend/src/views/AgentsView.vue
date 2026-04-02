@@ -113,7 +113,7 @@
           <el-input
             v-model="agentForm.feishu_app_secret"
             type="password"
-            placeholder="飞书应用 App Secret"
+            :placeholder="editingAgent?.feishu_secret_configured ? '已配置，留空则不修改' : '飞书应用 App Secret'"
             show-password
           />
         </el-form-item>
@@ -210,16 +210,6 @@ const bindForm = reactive({
 })
 const binding = ref(false)
 
-function getStatusType(status: AgentStatus) {
-  const types: Record<AgentStatus, string> = {
-    running: 'success',
-    stopped: 'info',
-    error: 'danger',
-    starting: 'warning',
-  }
-  return types[status] || 'info'
-}
-
 function getStatusLabel(status: AgentStatus) {
   const labels: Record<AgentStatus, string> = {
     running: '运行中',
@@ -255,7 +245,7 @@ function handleEdit(agent: Agent) {
   agentForm.workspace = agent.workspace
   agentForm.description = agent.description || ''
   agentForm.feishu_app_id = agent.feishu_app_id || ''
-  agentForm.feishu_app_secret = agent.feishu_app_secret || ''
+  agentForm.feishu_app_secret = ''
   showCreateDialog.value = true
 }
 

@@ -13,7 +13,7 @@ export interface Agent {
   status: AgentStatus
   team_id?: string
   feishu_app_id?: string
-  feishu_app_secret?: string
+  feishu_secret_configured?: boolean
   created_at: string
   updated_at: string
 }

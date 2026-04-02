@@ -51,7 +51,7 @@ export const agentsApi = {
 
   // Send message to agent
   async message(id: string, message: string): Promise<{ message: string; result: unknown }> {
-    const response = await api.post(`/agents/${id}/message`, null, { params: { message } })
+    const response = await api.post(`/agents/${id}/message`, { message })
     return response.data
   },
 
@@ -61,8 +61,9 @@ export const agentsApi = {
     channel: string,
     accountId?: string
   ): Promise<{ message: string; result: unknown }> {
-    const response = await api.post(`/agents/${id}/bind`, null, {
-      params: { channel, account_id: accountId },
+    const response = await api.post(`/agents/${id}/bind`, {
+      channel,
+      account_id: accountId,
     })
     return response.data
   },
